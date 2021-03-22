@@ -55,4 +55,34 @@
   // CoffeeMaker.BEANS_GRAMM_PER_SHOT;
 
   maker.fillCoffeeBeans(32);
+
+  // ⚡⚡⚡ Getter, Setter ⚡⚡⚡
+  class User {
+    get fullName(): string {
+      return `${this.firstName} ${this.lastName}`;
+    }
+
+    private internalAge = 4;
+    get age(): number {
+      return this.internalAge;
+    }
+    set age(num: number) {
+      if (num < 0) {
+        // setter를 이용해서 내부 값을 설정하면 유효성 체크 가능
+      }
+      this.internalAge = num;
+    }
+
+    // 파라미터에 접근제어자를 설정(public도 가능)하면
+    // 위에서 일일이 멤버변수를 선언하지 않아도 됨
+    constructor(private firstName: string, private lastName: string) {}
+  }
+
+  const user = new User('Steve', 'Jobs');
+  console.log(user.fullName); // getter 함수이지만 멤버변수에 접근하듯 사용
+
+  // user.internalAge;
+  console.log(user.age); // getter
+  user.age = 10; // setter
+  console.log(user.age);
 }
