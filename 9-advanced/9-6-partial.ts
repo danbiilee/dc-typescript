@@ -6,8 +6,13 @@
     priority: 'high' | 'low';
   };
 
-  // ✨ Partial: 기존 타입의 일부 properties만 허용
-  // 9-3-map에서 직접 정의했던 Optional<T> 와 동일
+  /* 
+    ✨ Partial: 기존 타입의 일부 properties만 허용
+    ---> 9-3-map에서 직접 정의했던 Optional<T> 와 동일
+    type Partial<T> = {
+      [P in keyof T]?: T[P];
+    };
+  */
   function updateToDo(todo: ToDo, fieldsToUpdate: Partial<ToDo>): ToDo {
     return {
       ...todo,
