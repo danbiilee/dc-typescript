@@ -8,10 +8,12 @@ export interface Composable {
 
 type OnCloseListener = () => void;
 
+// PageItemComponent을 대표하는 명세
 interface SectionContainer extends Component, Composable {
   setOnCloseListener(listener: OnCloseListener): void;
 }
 
+// SectionContainer라는 인터페이스의 규격을 따라가는 그 어떤 클래스의 인스턴스라도 생성 가능
 type SectionContainerConstructor = {
   new (): SectionContainer;
 };
@@ -50,7 +52,8 @@ export class PageComponent extends BaseComponent<HTMLUListElement> implements Co
   }
 
   addChild(section: Component) {
-    // 리팩토링: 외부에서 받아온 생성자를 통해 다양한 타입의 PageItemComponent 컴포넌트를 만들 수 있음!
+    // 리팩토링: PageComponent와 PageItemComponent 클래스들간의 디커플링
+    // 외부에서 받아온 생성자를 통해 다양한 타입의 PageItemComponent 컴포넌트를 만들 수 있음
     // ex. DarkPageItemComponent extends BaseComponent<HTMLElement> implements SectionContainer
     const item = new this.pageItemConstructor();
     item.addChild(section); // video, todo 등을 li body로 한 번 감싸기
