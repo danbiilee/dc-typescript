@@ -3,28 +3,21 @@ import { ImageComponent } from "./components/page/item/image.js";
 import { NoteComponent } from "./components/page/item/notes.js";
 import { TodoComponent } from "./components/page/item/todo.js";
 import { VideoComponent } from "./components/page/item/video.js";
-import { Composable, PageComponent } from "./components/page/page.js";
+import { Composable, PageComponent, PageItemComponent } from "./components/page/page.js";
 
 class App {
   // page가 PageComponent일지 아닐지 모름 -> 커플링을 추상화해줌
   private readonly page: Component & Composable;
 
   constructor(appRoot: HTMLElement) {
-    // 생성자 안에서 인스턴스 생성하는 건 위험함 -> DI가 확장성도 좋고 유닛테스트하기 좋음 -> 추후 변경
-    this.page = new PageComponent();
+    this.page = new PageComponent(PageItemComponent); // DI
     this.page.attachTo(appRoot);
 
-    const image = new ImageComponent(
-      "Image Title",
-      "https://picsum.photos/600/300"
-    );
+    const image = new ImageComponent("Image Title", "https://picsum.photos/600/300");
     // Page 내부적으로 PageItemComponent로 한단계 더 감싸서 추가
     this.page.addChild(image);
 
-    const video = new VideoComponent(
-      "Video Title",
-      "https://www.youtube.com/watch?v=U2ZF0Vmzk-Q&t=3s"
-    );
+    const video = new VideoComponent("Video Title", "https://www.youtube.com/watch?v=U2ZF0Vmzk-Q&t=3s");
     this.page.addChild(video);
 
     const note = new NoteComponent("Note Title", "Note Body");
