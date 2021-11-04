@@ -47,6 +47,12 @@ class App {
       TextSectionInput,
       (input: TextSectionInput) => new TodoComponent(input.title, input.body)
     );
+
+    // For Demo
+    this.page.addChild(new ImageComponent("Image Title", "https://picsum.photos/600/300"));
+    this.page.addChild(new VideoComponent("Video Title", "https://www.youtube.com/watch?v=U2ZF0Vmzk-Q&t=3s"));
+    this.page.addChild(new NoteComponent("Note Title", "Note Body"));
+    this.page.addChild(new TodoComponent("Todo Title", "Todo Item"));
   }
 
   // 리팩토링: 반복되는 코드는 함수로 분리, 다른 부분만 인자로 전달받아서 사용
