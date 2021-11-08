@@ -26,6 +26,8 @@ interface SectionContainer extends Component, Composable {
   setOnCloseListener(listener: OnCloseListener): void;
   setOnDragStateListener(listener: OnDragStateListener<SectionContainer>): void;
   muteChildren(state: "mute" | "unmute"): void;
+  getBoundingRect(): DOMRect;
+  onDropped(): void;
 }
 
 // SectionContainer라는 인터페이스의 규격을 따라가는 그 어떤 클래스의 인스턴스라도 생성 가능
@@ -65,18 +67,22 @@ export class PageItemComponent extends BaseComponent<HTMLElement> implements Sec
   // event는 사용하지 않으므로 언더바 처리(혹시 사용할 수도 있으므로 남겨둠)
   onDragStart(_: DragEvent) {
     this.notifyDragObservers("start");
+    this.element.classList.add("lifted");
   }
 
   onDragEnd(_: DragEvent) {
     this.notifyDragObservers("stop");
+    this.element.classList.remove("lifted");
   }
 
   onDragEnter(_: DragEvent) {
     this.notifyDragObservers("enter");
+    this.element.classList.add("drop-area");
   }
 
   onDragLeave(_: DragEvent) {
     this.notifyDragObservers("leave");
+    this.element.classList.remove("drop-area");
   }
 
   notifyDragObservers(state: DragState) {
@@ -98,6 +104,14 @@ export class PageItemComponent extends BaseComponent<HTMLElement> implements Sec
       this.element.classList.remove("mute-children");
     }
   }
+
+  getBoundingRect(): DOMRect {
+    return this.element.getBoundingClientRect();
+  }
+
+  onDropped() {
+    this.element.classList.remove("drop-area");
+  }
 }
 export class PageComponent extends BaseComponent<HTMLUListElement> implements Composable {
   private children = new Set<SectionContainer>();
@@ -115,22 +129,29 @@ export class PageComponent extends BaseComponent<HTMLUListElement> implements Co
 
   onDragOver(event: DragEvent) {
     event.preventDefault();
-    console.log("drag Over");
   }
 
   onDrop(event: DragEvent) {
     event.preventDefault();
-    console.log("drop");
 
     if (!this.dropTarget) {
       return;
     }
 
-    // 위치 변경하기
+    /* 
+      위치 변경하기
+      - 드랍하는 위치가 더 작다면 위로 드래그 앤 드랍한 것 -> 드랍 타겟의 위에 붙여줌
+      - 드랍하는 위치가 더 크다면 아래로 드래그 앤 드랍한 것 -> 드랍 타겟의 아래에 붙여줌
+    */
     if (this.dragTarget && this.dragTarget !== this.dropTarget) {
+      const dropY = event.clientY;
+      const srcElement = this.dragTarget.getBoundingRect();
+
       this.dragTarget.removeFrom(this.element);
-      this.dropTarget.attach(this.dragTarget, "beforebegin"); // dropTarget 앞부분에 추가해주기
+      this.dropTarget.attach(this.dragTarget, dropY < srcElement.y ? "beforebegin" : "afterend");
     }
+
+    this.dropTarget.onDropped();
   }
 
   addChild(section: Component) {
