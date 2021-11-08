@@ -1,8 +1,9 @@
 // 명세 규격해놓고 BaseComponent에서 구현
 // BaseComponent를 여기저기 전달하며 의사소통 하는 건 💩
 export interface Component {
-  attachTo(parent: HTMLElement, position?: InsertPosition): void;
+  attachTo(parent: HTMLElement, position?: InsertPosition): void; // 전달받은 부모에게 나를 부착
   removeFrom(parent: HTMLElement): void;
+  attach(component: Component, position?: InsertPosition): void; // 나 자신에게 전달받은 컴포넌트 부착
 }
 
 /* 
@@ -30,5 +31,9 @@ export class BaseComponent<T extends HTMLElement> implements Component {
       throw new Error("Parent mismatch!");
     }
     parent.removeChild(this.element);
+  }
+
+  attach(component: Component, position?: InsertPosition) {
+    component.attachTo(this.element, position);
   }
 }

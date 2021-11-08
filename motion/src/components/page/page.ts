@@ -91,6 +91,10 @@ export class PageItemComponent extends BaseComponent<HTMLElement> implements Sec
   }
 }
 export class PageComponent extends BaseComponent<HTMLUListElement> implements Composable {
+  // 컨테이너에서 드래그/드랍 아이템 상태 간직하고 있다가 서로 위치 바꿔줌
+  private dropTarget?: SectionContainer;
+  private dragTarget?: SectionContainer;
+
   constructor(private pageItemConstructor: SectionContainerConstructor) {
     // 부모 클래스의 생성자 호출
     super('<ul class="page"></ul>');
@@ -107,6 +111,16 @@ export class PageComponent extends BaseComponent<HTMLUListElement> implements Co
   onDrop(event: DragEvent) {
     event.preventDefault();
     console.log("drop");
+
+    // 위치 변경하기
+    if (!this.dropTarget) {
+      return;
+    }
+
+    if (this.dragTarget && this.dragTarget !== this.dropTarget) {
+      this.dragTarget.removeFrom(this.element);
+      this.dropTarget.attach(this.dragTarget, "beforebegin");
+    }
   }
 
   addChild(section: Component) {
@@ -116,11 +130,28 @@ export class PageComponent extends BaseComponent<HTMLUListElement> implements Co
     const item = new this.pageItemConstructor();
     item.addChild(section); // video, todo 등을 li body로 한 번 감싸기
     item.attachTo(this.element, "beforeend"); // ul 안에 감싸진 컴포넌트 li를 추가하기
+
+    // ItemComponent 만들어질 때마다 리스너 등록
     item.setOnCloseListener(() => {
       item.removeFrom(this.element);
     });
     item.setOnDragStateListener((target: SectionContainer, state: DragState) => {
-      console.log(target, state);
+      switch (state) {
+        case "start":
+          this.dragTarget = target;
+          break;
+        case "stop":
+          this.dragTarget = undefined;
+          break;
+        case "enter":
+          this.dropTarget = target;
+          break;
+        case "leave":
+          this.dropTarget = undefined;
+          break;
+        default:
+          throw new Error(`unsupported state: ${state}`);
+      }
     });
   }
 }
