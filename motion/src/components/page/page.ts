@@ -25,6 +25,7 @@ type OnDragStateListener<T extends Component> = (target: T, state: DragState) =>
 interface SectionContainer extends Component, Composable {
   setOnCloseListener(listener: OnCloseListener): void;
   setOnDragStateListener(listener: OnDragStateListener<SectionContainer>): void;
+  muteChildren(state: "mute" | "unmute"): void;
 }
 
 // SectionContainer라는 인터페이스의 규격을 따라가는 그 어떤 클래스의 인스턴스라도 생성 가능
@@ -89,8 +90,17 @@ export class PageItemComponent extends BaseComponent<HTMLElement> implements Sec
   setOnDragStateListener(listener: OnDragStateListener<PageItemComponent>) {
     this.dragStateListener = listener;
   }
+
+  muteChildren(state: "mute" | "unmute") {
+    if (state === "mute") {
+      this.element.classList.add("mute-children");
+    } else {
+      this.element.classList.remove("mute-children");
+    }
+  }
 }
 export class PageComponent extends BaseComponent<HTMLUListElement> implements Composable {
+  private children = new Set<SectionContainer>();
   // 컨테이너에서 드래그/드랍 아이템 상태 간직하고 있다가 서로 위치 바꿔줌
   private dropTarget?: SectionContainer;
   private dragTarget?: SectionContainer;
@@ -112,14 +122,14 @@ export class PageComponent extends BaseComponent<HTMLUListElement> implements Co
     event.preventDefault();
     console.log("drop");
 
-    // 위치 변경하기
     if (!this.dropTarget) {
       return;
     }
 
+    // 위치 변경하기
     if (this.dragTarget && this.dragTarget !== this.dropTarget) {
       this.dragTarget.removeFrom(this.element);
-      this.dropTarget.attach(this.dragTarget, "beforebegin");
+      this.dropTarget.attach(this.dragTarget, "beforebegin"); // dropTarget 앞부분에 추가해주기
     }
   }
 
@@ -134,14 +144,19 @@ export class PageComponent extends BaseComponent<HTMLUListElement> implements Co
     // ItemComponent 만들어질 때마다 리스너 등록
     item.setOnCloseListener(() => {
       item.removeFrom(this.element);
+      this.children.delete(item);
     });
+    this.children.add(item);
+
     item.setOnDragStateListener((target: SectionContainer, state: DragState) => {
       switch (state) {
         case "start":
           this.dragTarget = target;
+          this.updateSections("mute");
           break;
         case "stop":
           this.dragTarget = undefined;
+          this.updateSections("unmute");
           break;
         case "enter":
           this.dropTarget = target;
@@ -152,6 +167,12 @@ export class PageComponent extends BaseComponent<HTMLUListElement> implements Co
         default:
           throw new Error(`unsupported state: ${state}`);
       }
+    });
+  }
+
+  private updateSections(state: "mute" | "unmute") {
+    this.children.forEach((section: SectionContainer) => {
+      section.muteChildren(state);
     });
   }
 }
