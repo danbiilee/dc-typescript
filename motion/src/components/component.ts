@@ -4,6 +4,10 @@ export interface Component {
   attachTo(parent: HTMLElement, position?: InsertPosition): void; // 전달받은 부모에게 나를 부착
   removeFrom(parent: HTMLElement): void;
   attach(component: Component, position?: InsertPosition): void; // 나 자신에게 전달받은 컴포넌트 부착
+  registerEventListener<K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any
+  ): void;
 }
 
 /* 
@@ -35,5 +39,13 @@ export class BaseComponent<T extends HTMLElement> implements Component {
 
   attach(component: Component, position?: InsertPosition) {
     component.attachTo(this.element, position);
+  }
+
+  // The same signature as the HTMLElement.addEventListener method
+  registerEventListener<K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any
+  ): void {
+    this.element.addEventListener(type, listener);
   }
 }

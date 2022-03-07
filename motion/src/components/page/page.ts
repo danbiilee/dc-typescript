@@ -1,3 +1,5 @@
+import { Draggable, Droppable, Hoverable } from "../../common/types.js";
+import { EnableDragging, EnableDrop, EnableHover } from "../../decorators/draggable.js";
 import { BaseComponent, Component } from "../component.js";
 
 // 전달받은 자식 컴포넌트를 자기 안에 추가하기 위한 명세
@@ -5,8 +7,6 @@ import { BaseComponent, Component } from "../component.js";
 export interface Composable {
   addChild(child: Component): void;
 }
-
-type OnCloseListener = () => void;
 
 /* 
   - start, stop: 드래그 되고 있는 요소의 관점
@@ -20,9 +20,10 @@ type DragState = "start" | "stop" | "enter" | "leave";
   - ✨ T: 안전하면서 타입 보존이 되는 제네릭 사용 
 */
 type OnDragStateListener<T extends Component> = (target: T, state: DragState) => void;
+type OnCloseListener = () => void;
 
 // PageItemComponent을 대표하는 명세
-interface SectionContainer extends Component, Composable {
+interface SectionContainer extends Component, Composable, Draggable, Hoverable {
   setOnCloseListener(listener: OnCloseListener): void;
   setOnDragStateListener(listener: OnDragStateListener<SectionContainer>): void;
   muteChildren(state: "mute" | "unmute"): void;
@@ -35,6 +36,8 @@ type SectionContainerConstructor = {
   new (): SectionContainer;
 };
 
+@EnableDragging
+@EnableHover
 export class PageItemComponent extends BaseComponent<HTMLElement> implements SectionContainer {
   private closeListener?: OnCloseListener; // 콜백함수
   private dragStateListener?: OnDragStateListener<PageItemComponent>; // 타입만 바꿔서 재사용 가능
@@ -51,11 +54,6 @@ export class PageItemComponent extends BaseComponent<HTMLElement> implements Sec
     closeBtn.onclick = () => {
       this.closeListener && this.closeListener();
     };
-
-    this.element.addEventListener("dragstart", (event: DragEvent) => this.onDragStart(event));
-    this.element.addEventListener("dragend", (event: DragEvent) => this.onDragEnd(event));
-    this.element.addEventListener("dragenter", (event: DragEvent) => this.onDragEnter(event));
-    this.element.addEventListener("dragleave", (event: DragEvent) => this.onDragLeave(event));
   }
 
   // child의 타입은 Component Interface!!!
@@ -113,7 +111,8 @@ export class PageItemComponent extends BaseComponent<HTMLElement> implements Sec
     this.element.classList.remove("drop-area");
   }
 }
-export class PageComponent extends BaseComponent<HTMLUListElement> implements Composable {
+@EnableDrop
+export class PageComponent extends BaseComponent<HTMLUListElement> implements Composable, Droppable {
   private children = new Set<SectionContainer>();
   // 컨테이너에서 드래그/드랍 아이템 상태 간직하고 있다가 서로 위치 바꿔줌
   private dropTarget?: SectionContainer;
@@ -122,18 +121,11 @@ export class PageComponent extends BaseComponent<HTMLUListElement> implements Co
   constructor(private pageItemConstructor: SectionContainerConstructor) {
     // 부모 클래스의 생성자 호출
     super('<ul class="page"></ul>');
-
-    this.element.addEventListener("dragover", (event: DragEvent) => this.onDragOver(event));
-    this.element.addEventListener("drop", (event: DragEvent) => this.onDrop(event));
   }
 
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-  }
+  onDragOver(_: DragEvent) {}
 
   onDrop(event: DragEvent) {
-    event.preventDefault();
-
     if (!this.dropTarget) {
       return;
     }
